@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ var (
 			Name: "flow_receive_bytes_total",
 			Help: "Bytes received.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "src_net", "dst_net"},
 	)
 
 	flowTransmitBytesTotal = promauto.NewCounterVec(
@@ -28,17 +28,19 @@ var (
 			Name: "flow_transmit_bytes_total",
 			Help: "Bytes transferred.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "src_net", "dst_net"},
 	)
 )
 
 type flow struct {
 	SourceAS      int    `json:"as_src"`
 	DestinationAS int    `json:"as_dst"`
-	SourceIP      string `json:"ip_dst"`
-	DestinationIP string `json:"ip_src"`
 	Bytes         int    `json:"bytes"`
 	Hostname      string `json:"label"`
+	SourceNET     string `json:"net_src"`
+	DestinationNET   string `json:"net_dst"`
+	SourceMask       int    `json:"mask_src"`
+	DestinationMask  int    `json:"mask_dst"`
 }
 
 // Consume ...
@@ -132,6 +134,8 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+				"src_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
+				"dst_net":			   f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
 			},
 		).Add(float64(f.Bytes))
 	} else if f.DestinationAS == asn {
@@ -142,6 +146,8 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+				"src_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
+				"dst_net":             f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
 			},
 		).Add(float64(f.Bytes))
 	}
