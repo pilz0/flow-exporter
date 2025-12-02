@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ var (
 			Name: "flow_receive_bytes_total",
 			Help: "Bytes received.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "ip_src", "ip_dst"},
 	)
 
 	flowTransmitBytesTotal = promauto.NewCounterVec(
@@ -28,15 +28,15 @@ var (
 			Name: "flow_transmit_bytes_total",
 			Help: "Bytes transferred.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "ip_src", "ip_dst"},
 	)
 )
 
 type flow struct {
 	SourceAS      int    `json:"as_src"`
 	DestinationAS int    `json:"as_dst"`
-	SourceIP      string `json:"ip_dst"`
-	DestinationIP string `json:"ip_src"`
+	SourceIP      string `json:"ip_src"`
+	DestinationIP string `json:"ip_dst"`
 	Bytes         int    `json:"bytes"`
 	Hostname      string `json:"label"`
 }
@@ -132,6 +132,8 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+				"ip_src":      		   f.SourceIP,
+				"ip_dst":              f.DestinationIP,
 			},
 		).Add(float64(f.Bytes))
 	} else if f.DestinationAS == asn {
@@ -142,6 +144,8 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+				"ip_src":      		   f.SourceIP,
+				"ip_dst":              f.DestinationIP,
 			},
 		).Add(float64(f.Bytes))
 	}
