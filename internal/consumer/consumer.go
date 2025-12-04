@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/IBM/sarama"
+	"github.com/Shopify/sarama"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
