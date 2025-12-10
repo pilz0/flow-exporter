@@ -18,18 +18,49 @@ var (
 	flowReceiveBytesTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "flow_receive_bytes_total",
-			Help: "Bytes received.",
+			Help: "Bytes received by ASN.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "src_net", "dst_net"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
 	)
 
 	flowTransmitBytesTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "flow_transmit_bytes_total",
-			Help: "Bytes transferred.",
+			Help: "Bytes transferred by ASN.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "src_net", "dst_net"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
 	)
+	flowReceiveBytesTotalByNET = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "flow_receive_bytes_total_by_net",
+			Help: "Bytes received by Network.",
+		},
+		[]string{"hostname", "src_net", "dst_net"},
+	)
+
+	flowTransmitBytesTotalByNET = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "flow_transmit_bytes_total_by_net",
+			Help: "Bytes transferred by Network.",
+		},
+		[]string{"hostname", "src_net", "dst_net"},
+	)
+	flowReceiveBytesTotalByPort = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "flow_receive_bytes_total_by_port",
+			Help: "Bytes received by Port.",
+		},
+		[]string{"hostname", "src_port", "dst_port"},
+	)
+
+	flowTransmitBytesTotalByPort = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "flow_transmit_bytes_total_by_port",
+			Help: "Bytes transferred by Port.",
+		},
+		[]string{"hostname", "src_port", "dst_port"},
+	)
+
 )
 
 type flow struct {
@@ -38,9 +69,11 @@ type flow struct {
 	Bytes         int    `json:"bytes"`
 	Hostname      string `json:"label"`
 	SourceNET     string `json:"net_src"`
-	DestinationNET   string `json:"net_dst"`
-	SourceMask       int    `json:"mask_src"`
-	DestinationMask  int    `json:"mask_dst"`
+	DestinationNET	string `json:"net_dst"`
+	SourceMask		int    `json:"mask_src"`
+	DestinationMask	int    `json:"mask_dst"`
+	SourcePort		int 	`json:"port_src"`
+	DestinationPort	int 	`json:"port_dst"`
 }
 
 // Consume ...
@@ -125,7 +158,6 @@ func getPartitions(c sarama.Consumer, topic string, partitions string) ([]int32,
 func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 	var f flow
 	json.Unmarshal([]byte(message.Value), &f)
-
 	if f.SourceAS == asn {
 		flowTransmitBytesTotal.With(
 			prometheus.Labels{
@@ -134,8 +166,20 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+			},
+		).Add(float64(f.Bytes))
+		flowTransmitBytesTotalByNET.With(
+			prometheus.Labels{
+				"hostname":            f.Hostname,
 				"src_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
 				"dst_net":			   f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
+			},
+		).Add(float64(f.Bytes))
+		flowTransmitBytesTotalByPort.With(
+			prometheus.Labels{
+				"hostname":            f.Hostname,
+				"src_port":            strconv.Itoa(f.SourcePort),
+				"dst_port":			   strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
 	} else if f.DestinationAS == asn {
@@ -146,8 +190,20 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+			},
+		).Add(float64(f.Bytes))
+		flowReceiveBytesTotalByNET.With(
+			prometheus.Labels{
+				"hostname":            f.Hostname,
 				"src_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
 				"dst_net":             f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
+			},
+		).Add(float64(f.Bytes))
+		flowReceiveBytesTotalByPort.With(
+			prometheus.Labels{
+				"hostname":            f.Hostname,
+				"src_port":            strconv.Itoa(f.SourcePort),
+				"dst_port":			   strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
 	}
