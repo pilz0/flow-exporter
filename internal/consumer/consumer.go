@@ -35,7 +35,7 @@ var (
 			Name: "flow_receive_bytes_total_by_net",
 			Help: "Bytes received by Network.",
 		},
-		[]string{"hostname", "src_net", "dst_net"},
+		[]string{"hostname", "source_net", "destination_net"},
 	)
 
 	flowTransmitBytesTotalByNET = promauto.NewCounterVec(
@@ -43,14 +43,14 @@ var (
 			Name: "flow_transmit_bytes_total_by_net",
 			Help: "Bytes transferred by Network.",
 		},
-		[]string{"hostname", "src_net", "dst_net"},
+		[]string{"hostname", "source_net", "destination_net"},
 	)
 	flowReceiveBytesTotalByPort = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "flow_receive_bytes_total_by_port",
 			Help: "Bytes received by Port.",
 		},
-		[]string{"hostname", "src_port", "dst_port"},
+		[]string{"hostname", "destination_port"},
 	)
 
 	flowTransmitBytesTotalByPort = promauto.NewCounterVec(
@@ -58,7 +58,7 @@ var (
 			Name: "flow_transmit_bytes_total_by_port",
 			Help: "Bytes transferred by Port.",
 		},
-		[]string{"hostname", "src_port", "dst_port"},
+		[]string{"hostname", "dst_port"},
 	)
 
 )
@@ -182,7 +182,7 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"dst_port":			   strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
-	} else if f.DestinationAS == asn {
+		} else if f.DestinationAS == asn {
 		flowReceiveBytesTotal.With(
 			prometheus.Labels{
 				"source_as":           strconv.Itoa(f.SourceAS),
@@ -195,15 +195,15 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 		flowReceiveBytesTotalByNET.With(
 			prometheus.Labels{
 				"hostname":            f.Hostname,
-				"src_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
-				"dst_net":             f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
+				"source_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
+				"destination_net":             f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
 			},
 		).Add(float64(f.Bytes))
 		flowReceiveBytesTotalByPort.With(
 			prometheus.Labels{
 				"hostname":            f.Hostname,
-				"src_port":            strconv.Itoa(f.SourcePort),
-				"dst_port":			   strconv.Itoa(f.DestinationPort),
+				"source_port":            strconv.Itoa(f.SourcePort),
+				"destination_port":			   strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
 	}
