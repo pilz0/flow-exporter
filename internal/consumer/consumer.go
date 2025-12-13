@@ -170,9 +170,9 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 		).Add(float64(f.Bytes))
 		flowTransmitBytesTotalByNET.With(
 			prometheus.Labels{
-				"hostname":            f.Hostname,
-				"src_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
-				"dst_net":			   f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
+				"hostname":				f.Hostname,
+				"source_net":			f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
+				"destination_net":		f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
 			},
 		).Add(float64(f.Bytes))
 		flowTransmitBytesTotalByPort.With(
@@ -193,15 +193,15 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 		).Add(float64(f.Bytes))
 		flowReceiveBytesTotalByNET.With(
 			prometheus.Labels{
-				"hostname":            f.Hostname,
-				"source_net":             f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
-				"destination_net":             f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
+				"hostname":				f.Hostname,
+				"source_net":			f.SourceNET + "/" + strconv.Itoa(f.SourceMask),
+				"destination_net":		f.DestinationNET + "/" + strconv.Itoa(f.DestinationMask),
 			},
 		).Add(float64(f.Bytes))
 		flowReceiveBytesTotalByPort.With(
 			prometheus.Labels{
-				"hostname":            f.Hostname,
-				"destination_port":			   strconv.Itoa(f.DestinationPort),
+				"hostname":				f.Hostname,
+				"destination_port":		strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
 	}
