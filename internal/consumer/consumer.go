@@ -58,7 +58,7 @@ var (
 			Name: "flow_transmit_bytes_total_by_port",
 			Help: "Bytes transferred by Port.",
 		},
-		[]string{"hostname", "dst_port"},
+		[]string{"hostname", "destination_port"},
 	)
 
 )
@@ -72,7 +72,6 @@ type flow struct {
 	DestinationNET	string `json:"net_dst"`
 	SourceMask		int    `json:"mask_src"`
 	DestinationMask	int    `json:"mask_dst"`
-	SourcePort		int 	`json:"port_src"`
 	DestinationPort	int 	`json:"port_dst"`
 }
 
@@ -177,8 +176,8 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 		).Add(float64(f.Bytes))
 		flowTransmitBytesTotalByPort.With(
 			prometheus.Labels{
-				"hostname":            f.Hostname,
-				"dst_port":			   strconv.Itoa(f.DestinationPort),
+				"hostname":				f.Hostname,
+				"destination_port":		strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
 		} else if f.DestinationAS == asn {
