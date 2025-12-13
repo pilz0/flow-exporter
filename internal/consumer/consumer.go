@@ -178,7 +178,6 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 		flowTransmitBytesTotalByPort.With(
 			prometheus.Labels{
 				"hostname":            f.Hostname,
-				"src_port":            strconv.Itoa(f.SourcePort),
 				"dst_port":			   strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
@@ -202,7 +201,6 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 		flowReceiveBytesTotalByPort.With(
 			prometheus.Labels{
 				"hostname":            f.Hostname,
-				"source_port":            strconv.Itoa(f.SourcePort),
 				"destination_port":			   strconv.Itoa(f.DestinationPort),
 			},
 		).Add(float64(f.Bytes))
